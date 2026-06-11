@@ -24,7 +24,7 @@ export const registerUser = async ({
     throw new Error("Invalid user type");
   }
 
-   const dbType = ROLE_MAP[normalized]; // ✅ FINAL VALUE
+   const dbType = ROLE_MAP[normalizedType]; // ✅ FINAL VALUE
 
   // 🚨 ROLE RULES
   if (creator.type === ROLES.TUTOR && dbType !== ROLES.CANDIDATE) {
@@ -45,7 +45,9 @@ export const registerUser = async ({
     email,
     password: hashed,
     type: dbType, // ✅ MUST BE dbType (NOT type)
-    created_by: creator.id,
+    created_by: dbType === ROLES.CANDIDATE
+        ? creator.id
+        : null,
   });
 
   return user;

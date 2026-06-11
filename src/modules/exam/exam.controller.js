@@ -7,7 +7,54 @@ import {
   getExamQuestionsRepo,
   getQuestionOptionsRepo,
   getStudentExamRepo,
+  deleteExamRepo,
+  updateExamRepo
 } from "./exam.repository.js";
+import { createExamService,getExamQuestionsService, deleteExamService, updateExamService, getStudentExamService, submitExamService  } from "./exam.service.js";
+
+export const submitExam = async (req, res) => {
+  const result = await submitExamService(req.body, req.user.id);
+
+  if (result.success === false) {
+    return res.status(409).json({
+      error: result.message,
+    });
+  }
+
+  return res.status(200).json(result);
+};
+
+export const getExamQuestions =
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const result =
+        await getExamQuestionsService(
+          req.params.examId
+        );
+
+      res
+        .status(200)
+        .json(result);
+
+    } catch (err) {
+
+      console.error(
+        err
+      );
+
+      res
+        .status(400)
+        .json({
+          error:
+            err.message,
+        });
+    }
+  };
 
 export const getMyExam = async (req, res) => {
   try {
@@ -50,26 +97,48 @@ export const getMyExam = async (req, res) => {
 };
 
 
-export const getExamQuestions = async (req, res) => {
+// export const getExamQuestions = async (req, res) => {
+//   try {
+//     const { exam_id } = req.body;
+
+//     const questions = await getExamQuestionsRepo(exam_id);
+
+//     const finalQuestions = [];
+
+//     for (const question of questions) {
+//       const options = await getQuestionOptionsRepo(
+//         question.question_id
+//       );
+
+//       finalQuestions.push({
+//         ...question,
+//         options,
+//       });
+//     }
+
+//     res.json(finalQuestions);
+//   } catch (err) {
+//     console.error(err);
+
+//     res.status(500).json({
+//       error: err.message,
+//     });
+//   }
+// };
+
+
+export const createExam = async (
+  req,
+  res
+) => {
   try {
-    const { exam_id } = req.body;
-
-    const questions = await getExamQuestionsRepo(exam_id);
-
-    const finalQuestions = [];
-
-    for (const question of questions) {
-      const options = await getQuestionOptionsRepo(
-        question.question_id
+    const result =
+      await createExamService(
+        req.body,
+        req.user.id
       );
 
-      finalQuestions.push({
-        ...question,
-        options,
-      });
-    }
-
-    res.json(finalQuestions);
+    res.status(201).json(result);
   } catch (err) {
     console.error(err);
 
@@ -79,98 +148,44 @@ export const getExamQuestions = async (req, res) => {
   }
 };
 
+export const deleteExam =
+  async (req, res) => {
 
-export const createExam = async (req, res) => {
+    try {
+
+      const result =
+        await deleteExamRepo(
+          req.params.examId,
+          req.user.id
+        );
+
+      res.json(result);
+
+    } catch (err) {
+
+      res.status(400).json({
+        error: err.message,
+      });
+    }
+  };
+
+  export const updateExam = async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      duration_minutes,
-      total_marks,
-      passing_marks,
-      start_time,
-      end_time,
-      domain_id,
 
-      allow_late_entry_minutes,
-      allow_pause_resume,
-      attempt_limit,
-      auto_submit_on_timeup,
+    const result =
+      await updateExamService(
+        req.params.examId,
+        req.body,
+        req.user.id
+      );
 
-      is_published,
-      negative_marking,
-      partial_marking_enabled,
+    res.status(200).json(result);
 
-      randomize_options,
-      randomize_questions,
-
-      status,
-    } = req.body;
-
-    const [result] = await db.execute(
-      `
-      INSERT INTO exams (
-        title,
-        description,
-        duration_minutes,
-        total_marks,
-        passing_marks,
-        start_time,
-        end_time,
-        domain_id,
-
-        allow_late_entry_minutes,
-        allow_pause_resume,
-        attempt_limit,
-        auto_submit_on_timeup,
-
-        is_published,
-        negative_marking,
-        partial_marking_enabled,
-
-        randomize_options,
-        randomize_questions,
-
-        status,
-        created_by
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        title,
-        description,
-        duration_minutes,
-        total_marks,
-        passing_marks,
-        start_time,
-        end_time,
-        domain_id,
-
-        allow_late_entry_minutes,
-        allow_pause_resume,
-        attempt_limit,
-        auto_submit_on_timeup,
-
-        is_published,
-        negative_marking,
-        partial_marking_enabled,
-
-        randomize_options,
-        randomize_questions,
-
-        status,
-        req.user.id,
-      ]
-    );
-
-    res.status(201).json({
-      message: "Exam created successfully",
-      exam_id: result.insertId,
-    });
   } catch (err) {
-    console.error("CREATE EXAM ERROR:", err);
 
-    res.status(500).json({
+    console.error(err);
+
+    res.status(400).json({
       error: err.message,
     });
   }
@@ -178,7 +193,7 @@ export const createExam = async (req, res) => {
 
 export const getExamList = async (req, res) => {
   try {
-    const exams = await getExamListRepo();
+    const exams = await getExamListRepo(req.user.id);
 
     res.json(exams);
   } catch (err) {
@@ -203,4 +218,28 @@ export const addQuestions = async (req, res) => {
 export const myExams = async (req, res) => {
   const exams = await getExamsForStudent(req.user.id);
   res.json(exams);
+};
+
+export const getStudentExam = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const result =
+      await getStudentExamService(
+        req.user.id
+      );
+
+    res.status(200).json(result);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(400).json({
+      error: err.message,
+    });
+  }
 };
