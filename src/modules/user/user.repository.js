@@ -1,12 +1,46 @@
 import db from "../../config/db.js";
 
 export const getStudentsByTeacher = async (teacherId) => {
+
   const [rows] = await db.execute(
-    `SELECT id, first_name, last_name, email 
-     FROM users 
-     WHERE created_by = ? 
-     AND type = 'CANDIDATE' 
-     AND deleted = 0`,
+    `
+    SELECT
+      u.id,
+      u.first_name,
+      u.last_name,
+      u.email,
+
+      CASE
+        WHEN COUNT(e.exam_id) > 0
+        THEN 1
+        ELSE 0
+      END AS assigned
+
+    FROM users u
+
+    LEFT JOIN user_enrollments ue
+      ON ue.user_id = u.id
+      AND ue.status IN (
+        'ENROLLED',
+        'IN_PROGRESS'
+      )
+
+    LEFT JOIN exams e
+      ON ue.exam_id = e.exam_id
+      AND e.deleted = 0
+
+    WHERE u.created_by = ?
+      AND u.type = 'CANDIDATE'
+      AND u.deleted = 0
+
+    GROUP BY
+      u.id,
+      u.first_name,
+      u.last_name,
+      u.email
+
+    ORDER BY u.first_name
+    `,
     [teacherId]
   );
 

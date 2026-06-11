@@ -3,31 +3,54 @@ import { Router } from "express";
 import {
   getExamList,
   createExam,
-  assignStudents,
-  addQuestions,
-  myExams,
-  getExamQuestions,
-  getMyExam
+  getMyExam,
+  submitExam,
+  deleteExam,
+  updateExam,
+  getStudentExam,
+  getExamQuestions
 } from "./exam.controller.js";
 
 import { authMiddleware } from "../../middlewares/auth.middleware.js";
+
 import { allowRoles } from "../../middlewares/role.middleware.js";
 
 const router = Router();
 
-router.get(
-  "/my-exam",
-  authMiddleware,
-  getMyExam
-);
-
-router.get("/listOfExams", authMiddleware, allowRoles("ADMIN", "TUTOR"), getExamList);
+// =========================
+// SUBMIT EXAM
+// =========================
 
 router.post(
-  "/questions",
+  "/submitExam",
+  authMiddleware,
+  submitExam
+);
+
+
+// =========================
+// STUDENT EXAM QUESTIONS
+// =========================
+
+router.get(
+  "/:examId/questions",
   authMiddleware,
   getExamQuestions
 );
+
+// =========================
+// CURRENT EXAM
+// =========================
+
+router.get(
+  "/student/current",
+  authMiddleware,
+  getStudentExam
+);
+
+// =========================
+// CREATE EXAM
+// =========================
 
 router.post(
   "/create",
@@ -36,27 +59,51 @@ router.post(
   createExam
 );
 
-router.post("/", authMiddleware, createExam);
-
-router.post(
-  "/assign",
-  authMiddleware,
-  allowRoles("ADMIN", "TUTOR"),
-  assignStudents
-);
-
-router.post(
-  "/questions",
-  authMiddleware,
-  allowRoles("ADMIN", "TUTOR"),
-  addQuestions
-);
+// =========================
+// GET ASSIGNED EXAM
+// =========================
 
 router.get(
-  "/my-exams",
+  "/my-exam",
+  authMiddleware,
+  getMyExam
+);
+
+// =========================
+// GET ALL EXAMS
+// =========================
+
+router.get(
+  "/listOfExams",
   authMiddleware,
   allowRoles("ADMIN", "TUTOR"),
-  myExams
+  getExamList
 );
+
+// ==============
+// DELETE EXAM
+// ==============
+
+router.delete(
+  "/:examId",
+  authMiddleware,
+  allowRoles(
+    "ADMIN",
+    "TUTOR"
+  ),
+  deleteExam
+);
+
+// =========================
+// UPDATE EXAM
+// =========================
+
+router.put(
+  "/:examId",
+  authMiddleware,
+  allowRoles("ADMIN", "TUTOR"),
+  updateExam
+);
+
 
 export default router;

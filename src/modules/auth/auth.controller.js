@@ -21,7 +21,11 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const data = await loginUser(req.body);
-    res.json(data);
+    const { password, ...safeUser } = data.user;
+    res.json({
+      token: data.token,
+      user: safeUser,
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
