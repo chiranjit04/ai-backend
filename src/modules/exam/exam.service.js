@@ -1,101 +1,71 @@
 import db from "../../config/db.js";
-import { updateExamRepo, getStudentExamRepo, getExamQuestionsRepo, evaluateExamRepo, saveExamResultRepo } from "./exam.repository.js";
+import {
+  updateExamRepo,
+  getStudentExamRepo,
+  getExamQuestionsRepo,
+  evaluateExamRepo,
+  saveExamResultRepo,
+  removeEnrollmentRepo,
+  completeEnrollmentRepo
+} from "./exam.repository.js";
 
+export const submitExamService = async (payload, studentId) => {
+  const questions = await evaluateExamRepo(payload.exam_id);
 
-export const submitExamService = 
-  async (
-    payload,
-    studentId
-  ) => {
+  let score = 0;
 
-    const questions =
-      await evaluateExamRepo(
-        payload.exam_id
-      );
+  let totalMarks = 0;
 
-    let score = 0;
+  questions.forEach((question) => {
+    totalMarks += Number(question.marks);
 
-    let totalMarks = 0;
+    const userAnswer = payload.answers[question.question_id];
 
-    questions.forEach(
-      (question) => {
+    if (userAnswer === question.answer) {
+      score += Number(question.marks);
+    }
+  });
 
-        totalMarks +=
-          Number(
-            question.marks
-          );
+  try {
+    await saveExamResultRepo(
+      {
+        exam_id: payload.exam_id,
 
-        const userAnswer =
-          payload.answers[
-            question.question_id
-          ];
+        score,
 
-        if (
-          userAnswer ===
-          question.answer
-        ) {
-
-          score +=
-            Number(
-              question.marks
-            );
-        }
-      }
+        total_marks: totalMarks,
+      },
+      studentId,
     );
+  } catch (err) {
+    if (err.code === "ER_DUP_ENTRY") {
+      await completeEnrollmentRepo(payload.exam_id, studentId);
 
-    try {
+      return {
+        success: false,
+        message: "You have already submitted this exam.",
+      };
+    }
 
-  await saveExamResultRepo(
-    {
-      exam_id:
-        payload.exam_id,
-
-      score,
-
-      total_marks:
-        totalMarks,
-    },
-    studentId
-  );
-
-} catch (err) {
-
-  if (
-    err.code ===
-    "ER_DUP_ENTRY"
-  ) {
-
-    return {
-      success: false,
-      message:
-        "You have already submitted this exam.",
-    };
+    throw err;
   }
 
-  throw err;
-}
-
-    return {
-      score,
-      totalMarks,
-    };
+  return {
+    score,
+    totalMarks,
   };
+};
 
 export const getExamQuestionsService = async (examId) => {
   const questions = await getExamQuestionsRepo(examId);
   return questions;
 };
 
-export const getStudentExamService =
-  async (studentId) => {
+export const getStudentExamService = async (studentId) => {
+  const exam = await getStudentExamRepo(studentId);
 
-    const exam =
-      await getStudentExamRepo(
-        studentId
-      );
-
-    return exam;
-  };
+  return exam;
+};
 
 // export const submitExamService = async (payload, userId) => {
 //   const connection = await db.getConnection();
