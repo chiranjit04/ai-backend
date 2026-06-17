@@ -3,6 +3,52 @@ import {
   generateUUIDBuffer,
 } from "../../utils/uuid.js";
 
+export const completeEnrollmentRepo =
+  async (
+    examId,
+    studentId
+  ) => {
+
+    const [result] =
+      await db.execute(
+        `
+        UPDATE user_enrollments
+
+        SET
+          status = 'COMPLETED'
+
+        WHERE user_id = ?
+        AND exam_id = UUID_TO_BIN(?)
+        `,
+        [
+          studentId,
+          examId,
+        ]
+      );
+
+    return result;
+  };
+
+export const removeEnrollmentRepo =
+  async (
+    examId,
+    studentId
+  ) => {
+
+    await db.execute(
+      `UPDATE user_enrollments
+      SET status = 'COMPLETED'
+      WHERE exam_id =
+        UUID_TO_BIN(?)
+      AND user_id = ?
+      `,
+      [
+        examId,
+        studentId,
+      ]
+    );
+  };
+
 export const saveExamResultRepo =
   async (
     payload,

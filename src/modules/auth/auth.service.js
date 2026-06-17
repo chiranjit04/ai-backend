@@ -1,7 +1,84 @@
 import bcrypt from "bcrypt";
-import { insertUser, findUserByEmail } from "./auth.repository.js";
+import {
+  insertUser,
+  findUserByEmail,
+  getResetTokenRepo,
+  updatePasswordRepo,
+  deleteResetTokenRepo,
+  saveResetTokenRepo
+} from "./auth.repository.js";
 import jwt from "jsonwebtoken";
 import { ROLES, ROLE_MAP } from "../../constants/role.js";
+import crypto from "crypto";
+
+export const forgotPasswordService =
+  async (email) => {
+
+    const user =
+      await findUserByEmail(
+        email
+      );
+
+    if (!user) {
+
+      throw new Error(
+        "Email not found"
+      );
+    }
+
+    const token =
+      crypto
+        .randomBytes(32)
+        .toString("hex");
+
+    await saveResetTokenRepo(
+      user.id,
+      token
+    );
+
+    return {
+      token,
+    };
+  };
+
+export const resetPasswordService =
+  async (
+    token,
+    password
+  ) => {
+
+    const reset =
+      await getResetTokenRepo(
+        token
+      );
+
+    if (!reset) {
+
+      throw new Error(
+        "Invalid or expired token"
+      );
+    }
+
+    const hash =
+      await bcrypt.hash(
+        password,
+        10
+      );
+
+    await updatePasswordRepo(
+      reset.user_id,
+      hash
+    );
+
+    await deleteResetTokenRepo(
+      token
+    );
+
+    return {
+      message:
+        "Password updated successfully",
+    };
+  };
 
 export const registerUser = async ({
   first_name,

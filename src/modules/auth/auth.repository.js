@@ -1,5 +1,87 @@
 import db from "../../config/db.js";
 
+export const saveResetTokenRepo =
+  async (
+    userId,
+    token
+  ) => {
+
+    await db.execute(
+      `
+      INSERT INTO
+      password_resets
+      (
+        user_id,
+        token,
+        expires_at
+      )
+      VALUES
+      (
+        ?,
+        ?,
+        DATE_ADD(
+          NOW(),
+          INTERVAL 15 MINUTE
+        )
+      )
+      `,
+      [
+        userId,
+        token,
+      ]
+    );
+  };
+
+export const getResetTokenRepo =
+  async (token) => {
+
+    const [rows] =
+      await db.execute(
+        `
+        SELECT
+          user_id
+        FROM password_resets
+        WHERE token = ?
+        AND expires_at > NOW()
+        LIMIT 1
+        `,
+        [token]
+      );
+
+    return rows[0];
+  };
+
+  export const updatePasswordRepo =
+  async (
+    userId,
+    hash
+  ) => {
+
+    await db.execute(
+      `
+      UPDATE users
+      SET password = ?
+      WHERE id = ?
+      `,
+      [
+        hash,
+        userId,
+      ]
+    );
+  };
+
+  export const deleteResetTokenRepo =
+  async (token) => {
+
+    await db.execute(
+      `
+      DELETE FROM password_resets
+      WHERE token = ?
+      `,
+      [token]
+    );
+  };
+
 export const findUserByEmail = async (email) => {
   const [rows] = await db.execute(
     "SELECT * FROM users WHERE email=? AND deleted=0",

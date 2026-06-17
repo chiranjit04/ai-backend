@@ -1,4 +1,42 @@
-import { registerUser, loginUser } from "./auth.service.js";
+import { registerUser, loginUser, resetPasswordService, forgotPasswordService } from "./auth.service.js";
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const result = await forgotPasswordService(req.body.email);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({
+      error: err.message,
+    });
+  }
+};
+
+export const resetPassword =
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const result =
+        await resetPasswordService(
+          req.body.token,
+          req.body.password
+        );
+
+      res.status(200).json(
+        result
+      );
+
+    } catch (err) {
+
+      res.status(400).json({
+        error:
+          err.message,
+      });
+    }
+  };
 
 // ✅ REGISTER
 export const register = async (req, res) => {
