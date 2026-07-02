@@ -1,4 +1,30 @@
-import { getStudentsByTeacher, getTeachersRepo } from "./user.repository.js";
+import { getStudentsByTeacher, getTeachersRepo, deleteStudentService } from "./user.repository.js";
+
+export const deleteStudent =
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const result =
+        await deleteStudentService(
+          req.params.id
+        );
+
+      res.status(200).json(
+        result
+      );
+
+    } catch (err) {
+
+      res.status(500).json({
+        error:
+          err.message,
+      });
+    }
+  };
 
 export const getMyStudents = async (req, res) => {
   try {

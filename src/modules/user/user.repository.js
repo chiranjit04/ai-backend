@@ -1,5 +1,32 @@
 import db from "../../config/db.js";
 
+export const deleteStudentRepo =
+  async (userId) => {
+
+    await db.execute(
+      `
+      UPDATE users
+      SET deleted = 1
+      WHERE id = ?
+      AND type = 'CANDIDATE'
+      `,
+      [userId]
+    );
+  };
+
+  export const deleteStudentService =
+  async (userId) => {
+
+    await deleteStudentRepo(
+      userId
+    );
+
+    return {
+      message:
+        "Student deleted successfully",
+    };
+  };
+
 export const getStudentsByTeacher = async (teacherId) => {
 
   const [rows] = await db.execute(
