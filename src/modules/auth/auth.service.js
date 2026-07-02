@@ -141,7 +141,6 @@ export const loginUser = async ({ email, password }) => {
 
   if (!match) throw new Error("Invalid password");
   
-
   const token = jwt.sign(
     { id: user.id, type: user.type },
     process.env.JWT_SECRET,
